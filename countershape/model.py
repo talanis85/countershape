@@ -142,6 +142,9 @@ class BasePage(tinytree.Tree):
     structural = False
     # Set to an absolute path if the page has a source file
     src = None
+    # File dependencies
+    deps = None
+
     def __init__(self, children = None):
         if state.page and not state.application.testing:
             raise ApplicationError(

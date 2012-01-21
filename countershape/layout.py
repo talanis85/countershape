@@ -8,6 +8,7 @@ class Layout:
     bodyClass = ""
     components = ("pageTitle", "body", "header")
     def __init__(self, path = None, **kwargs):
+        self.path = path
         if path:
             body = template.File(False, path)
         else:

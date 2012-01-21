@@ -143,6 +143,13 @@ class Page(_DocHTMLPage):
                 self.namespace[dt] = template.Template(self.findAttr("markup"), s)
             self.namespace[dt].name = self.src
 
+        layoutpath = self.findAttr("layout", self.defaultLayout).path
+        if layoutpath:
+            layoutpath = os.path.join(self.application.root.src, layoutpath)
+            self.deps = [os.path.join(self.application.root.src, "index.py"), self.src, layoutpath]
+        else:
+            self.deps = [os.path.join(self.application.root.src, "index.py"), self.src]
+
     def __repr__(self):
         return "HTMLPage(%s)"%self.name
 
@@ -151,6 +158,7 @@ class Copy(model.BasePage, _DocMixin):
     link = model.Link([])
     def __init__(self, name, title=None, src=None):
         self.name, self.src = self._nameSrc(name, src)
+        self.deps = [self.src]
         model.BasePage.__init__(self)
 
     def __repr__(self):
@@ -332,13 +340,27 @@ class Doc(model.BaseApplication):
             os.mkdir(destination)
         for i in self.root.preOrder():
             path = [j.name for j in i.structuralPath()]
+            outpath = os.path.join(destination, *path)
+
+            # Only use dependencies if they are implemented for that
+            # page type.
+            if not i.deps == None:
+                needs_render = False
+                if os.path.exists(outpath):
+                    for d in i.deps:
+                        if os.lstat(d).st_mtime > os.lstat(outpath).st_mtime:
+                            needs_render = True
+                            break
+                if not needs_render:
+                    continue
+
             if (not i.internal) and (not i is self.root):
                 if len(path) > 1:
                     newdir = os.path.join(destination, *path[:-1])
                     if not os.path.exists(newdir):
                         os.makedirs(newdir)
                 out = self(i)
-                f = open(os.path.join(destination, *path), "wb")
+                f = open(outpath, "wb")
                 if isinstance(out, unicode):
                     out = out.encode("utf-8")
                 f.write(out)
