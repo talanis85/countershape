@@ -144,11 +144,12 @@ class Page(_DocHTMLPage):
             self.namespace[dt].name = self.src
 
         layoutpath = self.findAttr("layout", self.defaultLayout).path
+        global _ConfFile
         if layoutpath:
             layoutpath = os.path.join(self.application.root.src, layoutpath)
-            self.deps = [os.path.join(self.application.root.src, "index.py"), self.src, layoutpath]
+            self.deps = [os.path.join(self.application.root.src, _ConfFile), self.src, layoutpath]
         else:
-            self.deps = [os.path.join(self.application.root.src, "index.py"), self.src]
+            self.deps = [os.path.join(self.application.root.src, _ConfFile), self.src]
 
     def __repr__(self):
         return "HTMLPage(%s)"%self.name
