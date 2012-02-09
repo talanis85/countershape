@@ -343,7 +343,7 @@ class Doc(model.BaseApplication):
             os.mkdir(destination)
 
         depfile = {}
-        try:
+        if os.path.exists(os.path.join(self.root.src, _DepFile)):
             with open(os.path.join(self.root.src, _DepFile), "r") as f:
                 for l in f.readlines():
                     (a,b,c) = l.partition(":")
@@ -352,8 +352,6 @@ class Doc(model.BaseApplication):
                     if a not in depfile:
                         depfile[a] = []
                     depfile[a].extend([os.path.join(self.root.src, x) for x in c.split()])
-        except:
-            pass
 
         for i in self.root.preOrder():
             path = [j.name for j in i.structuralPath()]
