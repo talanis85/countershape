@@ -3,6 +3,7 @@ import os, os.path, re, fnmatch, shutil, shlex, string,  codecs
 import model, utils, html, state, template, widgets, markup
 
 _ConfFile = "index.py"
+_DepFile = "site.deps"
 
 class Options:
     """
@@ -319,6 +320,7 @@ class DocRoot(Directory):
         """
         namespace = self._baseNS.copy()
         namespace["options"] = Options(options)
+        self.excludePatterns.append("*/%s"%_DepFile)
         Directory.__init__(self, src, namespace=namespace)
 
     def __repr__(self):
@@ -339,16 +341,31 @@ class Doc(model.BaseApplication):
     def render(self, destination):
         if not os.path.exists(destination):
             os.mkdir(destination)
+
+        depfile = {}
+        try:
+            with open(os.path.join(self.root.src, _DepFile), "r") as f:
+                for l in f.readlines():
+                    (a,b,c) = l.partition(":")
+                    if b != ":":
+                        raise Exception("Syntax error in depfile.")
+                    if a not in depfile:
+                        depfile[a] = []
+                    depfile[a].extend([os.path.join(self.root.src, x) for x in c.split()])
+        except:
+            pass
+
         for i in self.root.preOrder():
             path = [j.name for j in i.structuralPath()]
             outpath = os.path.join(destination, *path)
 
-            # Only use dependencies if they are implemented for that
-            # page type.
-            if not i.deps == None:
-                needs_render = False
+            if not isinstance(i, Directory):
+                joinedpath = os.path.join(*path)
+
+                needs_render = True
                 if os.path.exists(outpath):
-                    for d in i.deps:
+                    needs_render = False
+                    for d in (i.deps == None and [] or i.deps) + ((joinedpath in depfile) and depfile[joinedpath] or []):
                         if os.lstat(d).st_mtime > os.lstat(outpath).st_mtime:
                             needs_render = True
                             break
