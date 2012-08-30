@@ -352,6 +352,8 @@ class Doc(model.BaseApplication):
                         if os.lstat(d).st_mtime > os.lstat(outpath).st_mtime:
                             needs_render = True
                             break
+                else:
+                    needs_render = True
                 if not needs_render:
                     continue
 
